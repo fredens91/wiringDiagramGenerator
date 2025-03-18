@@ -1,5 +1,15 @@
-# Path della cartella che contiene i file .xlsx
-$folderPath = "C:\Users\orlandi_f\Downloads\"
+# Ottieni il percorso della cartella contenente il file .ps1
+$scriptDir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+
+# Costruisci il percorso relativo per la cartella che contiene i file .xlsx
+# Qui, si assume che i file .xlsx siano direttamente nella stessa cartella in cui si trova lo script
+$folderPath = $scriptDir  # Usa la stessa cartella dove si trova lo script
+
+# Verifica se la cartella esiste
+if (-Not (Test-Path -Path $folderPath)) {
+    Write-Host "La cartella non esiste nel percorso: $scriptDir"
+    return
+}
 
 # Ottieni tutti i file .xlsx nella cartella
 $files = Get-ChildItem -Path $folderPath -Filter "*.xlsx"
