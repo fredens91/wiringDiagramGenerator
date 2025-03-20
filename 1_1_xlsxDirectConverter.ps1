@@ -15,24 +15,26 @@ function Extract-ValuesFromExcel {
             # Ottieni il primo foglio di lavoro (se ce n'è più di uno, seleziona quello che ti serve)
             $worksheet = $workbook.Sheets.Item(1)
 
-            # Crea una lista per memorizzare le coppie di valori D e F
-            $pairs = @()
+            # Crea una lista per memorizzare i valori non nulli della colonna D
+            $values = @()
 
-            # Itera attraverso le righe a partire dalla riga 6
+            # Itera attraverso le righe della colonna D a partire dalla riga 6
             $row = 6
-            while ($worksheet.Cells.Item($row, 4).Value2 -ne $null -and $worksheet.Cells.Item($row, 6).Value2 -ne $null) {
-                $valueD = $worksheet.Cells.Item($row, 4).Value2
-                $valueF = $worksheet.Cells.Item($row, 6).Value2
-
-                if ($valueD -ne $null -and $valueD -ne '' -and $valueF -ne $null -and $valueF -ne '') {
-                    # Aggiungi la coppia di valori a $pairs
-                    $pairs += "$valueD;$valueF"
+            while ($worksheet.Cells.Item($row, 4).Value2 -ne $null) {
+                $value = $worksheet.Cells.Item($row, 4).Value2
+                if ($value -ne $null -and $value -ne '') {
+                    $values += $value
                 }
                 $row++
             }
 
-            # Stampa i valori separati da ";"
-            $pairs -join ';' | Write-Host
+            # Crea il percorso del file di output .txt
+            $txtFilePath = [System.IO.Path]::Combine($currentPath, "Valori_Estratti.txt")
+
+            # Scrivi i valori in un file .txt separati da ";"
+            $values -join ';' | Out-File -FilePath $txtFilePath -Encoding UTF8
+
+            Write-Host "I valori sono stati estratti in: $txtFilePath"
 
             # Chiude il workbook senza salvare
             $workbook.Close($false)
