@@ -1,71 +1,34 @@
-function Convert-ExcelToXml {
-    param (
-        [string]$XmlFileName = "output.xml"
-    )
+function Convert-XlsxToCsv {
+    # Ottieni il percorso della directory dello script
+    $currentPath = (Get-Location).Path
+    $xlsxFiles = Get-ChildItem -Path $currentPath -Filter "*.xlsx"
 
-    # Ottenere la directory dello script
-    $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-    
-    # Trovare il primo file .xlsx nella root
-    $ExcelFile = Get-ChildItem -Path $scriptRoot -Filter "*.xlsx" | Select-Object -First 1
+    # Creazione dell'oggetto Excel
+    $excelApp = New-Object -ComObject Excel.Application
+    $excelApp.Visible = $false
 
-    if (-not $ExcelFile) {
-        Write-Error "❌ Nessun file Excel trovato nella directory: $scriptRoot"
-        return
-    }
+    foreach ($file in $xlsxFiles) {
+        try {
+            # Apre il file Excel
+            $workbook = $excelApp.Workbooks.Open($file.FullName)
 
-    $ExcelFilePath = Join-Path -Path $scriptRoot -ChildPath $ExcelFile.Name
-    $XmlFilePath = Join-Path -Path $scriptRoot -ChildPath $XmlFileName
+            # Percorso del file CSV da generare
+            $csvPath = [System.IO.Path]::Combine($currentPath, "$($file.BaseName).csv")
+            
+            # Salva il contenuto del foglio come CSV
+            $workbook.SaveAs($csvPath, 6)  # 6 è il formato per CSV
 
-    # Importa i dati Excel
-    $excelData = Import-Excel -Path $ExcelFilePath -Worksheet 1
-
-    if (-not $excelData) {
-        Write-Error "❌ Nessun dato trovato nel file Excel."
-        return
-    }
-
-    # Estrarre i dati dalle colonne D e F (Codice e Quantità)
-    $codici = @()
-    $quantita = @()
-
-    for ($i = 5; $true; $i++) {
-        $codice = $excelData | Select-Object -ExpandProperty "D$i" -ErrorAction SilentlyContinue
-        $qta = $excelData | Select-Object -ExpandProperty "F$i" -ErrorAction SilentlyContinue
-        
-        if (-not $codice -and -not $qta) { break } # Interrompe quando entrambe sono vuote
-
-        if ($codice -and $qta) {
-            $codici += $codice
-            $quantita += $qta
+            # Chiude il workbook
+            $workbook.Close($false)
+        } catch {
+            Write-Host "Errore durante la conversione del file $($file.Name): $_"
         }
     }
 
-    if ($codici.Count -eq 0) {
-        Write-Error "❌ Nessun dato valido trovato nelle colonne Codice e Quantità."
-        return
-    }
-
-    # Creazione del documento XML
-    $xmlDoc = New-Object System.Xml.XmlDocument
-    $root = $xmlDoc.CreateElement("Dati")
-    $xmlDoc.AppendChild($root)
-
-    for ($i = 0; $i -lt $codici.Count; $i++) {
-        $item = $xmlDoc.CreateElement("Elemento")
-
-        $codiceNode = $xmlDoc.CreateElement("Codice")
-        $codiceNode.InnerText = $codici[$i]
-        $item.AppendChild($codiceNode)
-
-        $quantitaNode = $xmlDoc.CreateElement("Quantità")
-        $quantitaNode.InnerText = $quantita[$i]
-        $item.AppendChild($quantitaNode)
-
-        $root.AppendChild($item)
-    }
-
-    # Salvataggio XML
-    $xmlDoc.Save($XmlFilePath)
-    Write-Output "✅ File XML creato: $XmlFilePath"
+    # Esci dall'applicazione Excel
+    $excelApp.Quit()
+    [System.Runtime.Interopservices.Marshal]::ReleaseComObject($excelApp)
 }
+
+# Chiamata alla funzione
+Convert-XlsxToCsv
