@@ -1,7 +1,7 @@
 # Assicurati di avere il modulo ImportExcel installato:
 # Install-Module -Name ImportExcel -Force
 
-$path = "C:\Users\orlandi_f\Documents\GitHub\wiringDiagramGenerator\template XML"
+$path = "G:\Drive condivisi\T_Eboost_Projects"
 $outputXlsx = "C:\Users\orlandi_f\Documents\GitHub\wiringDiagramGenerator\folders_list.xlsx"
 
 # Ottieni l'elenco delle sottocartelle
